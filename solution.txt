@@ -1,0 +1,60 @@
+Solution
+1. The services not accessible from outside the container
+
+=> Although the container has the services on port 80 inside the container, I was not able to access the service outside container because the port was not exposed which could be binded to the port outside the container. First change in the Dockerfile was to expose the port 80, and during running the container use "-p" option during execution to expose the port on some port of your local system
+
+2. GET request working 1/3 time
+
+=> To debug this, the first step was to look at the entrypoint.sh file which gives the details of the configuration files for the 3 nginx services & the haproxy. When looking at the nginx01.conf, nginx02.conf & nginx03.conf, I found that the 3 services are listening at 8001, 8002 & 8003 respectively. But on the other hand, the haproxy.cfg defined the backend servers bounded at 8000, 8001 & 8002.
+
+=> So updating the haproxy.cfg file to use 8001, 8002 & 8003 will be the first part. I use "haproxy -f /usr/local/etc/haproxy/haproxy.cfg" to reset the haproxy service without the downtime
+
+=> Next, I checked that the nginx services are not responding which points to either configurational error or service not running. I first checked the configuration for all the 3 nginx confguration using "nginx -t -c <path>" to verify if the configuration is correct or not. This responds as success for all the three
+
+=> Next I looked at services running inside the container using the "ps -ef" which points to an issue. There were master processes running for the nginx01 & nginx03 but not for nginx02. This leads us to another correction and I started the nginx02 service.
+
+=> I restart the nginx services and the haproxy (without downtime) and with these two changes, I was able to get 3/3 reponse for out GET requests
+
+```
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works!
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works!
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works!
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works!
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works!
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works!
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works!
+```
+
+3. Edit http response
+
+=> Next for updating the http response, I had to update the "/var/www/html/index.html" file innside the container with our custom response. The output looks like this
+
+```
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+[root@ip-172-31-87-139 ~]# curl http://localhost:80
+it works! solved by Abhishek Sharma
+```
+
+NOTE: In the dockerfile, I have first updated the haproxy.cfg & started nginx02 service and then restarted the haproxy service as this should be the correct order for the process running fine

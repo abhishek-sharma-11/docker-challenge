@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  custom-app:
+    image: abhis6898/docker-challenge-solved-abhishek-sharma:latest
+    container_name: solved-container
+    depends_on:
+      - metrics-exporter
+    ports:
+      - "80:80"
+    environment:
+      METRICS_URL: http://metrics-exporter:9100/metrics
+    networks:
+      - custom-network
+
+  metrics-exporter:
+    image: prom/node-exporter:latest
+    container_name: metrics-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - custom-network
+
+networks:
+  custom-network:
+    driver: bridge
