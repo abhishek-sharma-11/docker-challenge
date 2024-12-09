@@ -1,0 +1,11 @@
+FROM mkassaian/docker-challenge
+
+RUN apt update -y && apt install procps -y && apt install curl -y
+
+RUN deluser haproxy
+
+RUN dpkg --configure -a && apt-get install -f
+
+RUN apt remove -y nginx haproxy
+
+RUN apt install -y nginx haproxy
